@@ -11,19 +11,10 @@ SCRIPT_PATH=$(readlink -f $0)
 SCRIPT_DIR=`dirname $SCRIPT_PATH`
 CONF_FILE=$SCRIPT_DIR/../xmm7360.ini
 
-# check if xmm7360.ini is available or exit
-if [ -f "$CONF_FILE" ]; then
-  source $CONF_FILE
-else
-  echo "no configuration file found, you can create it by copying the sample file like this:"
-  echo "cp $CONF_FILE.sample $CONF_FILE"
-  exit 1
-fi
-
 # run as root (Ubuntu GUI Tested)
 if [[ $EUID -ne 0 ]]; then
   echo "This script must be run as root, elevating!" 
-  exec pkexec $SCRIPT_DIR/lte.sh $1
+  exec sudo $SCRIPT_DIR/lte.sh $1
   exit 0
 fi
 
@@ -37,8 +28,7 @@ echo ""
 
 # install deps, module, and lte script to PATH
 if [[ "$1" = "setup" ]]; then
-  pip3 install pyroute2 configargparse --user
-
+  pip install pyroute2 configargparse dbus-python --user
   unlink /usr/local/bin/lte || true
   ln -s $SCRIPT_DIR/lte.sh /usr/local/bin/lte
   chmod 755 /usr/local/bin/lte
@@ -64,6 +54,6 @@ fi
 if [[ "$1" = "up" ]]; then
   echo "bringing wwan0 up!" 
 
-  python3 $SCRIPT_DIR/../rpc/open_xdatachannel.py
+  python3 $SCRIPT_DIR/../rpc/open_xdatachannel.py --apn smartsites.t-mobile --nodefaultroute --noresolv --dbus
   ip link set wwan0 up
 fi
